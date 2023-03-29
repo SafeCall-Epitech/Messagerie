@@ -1,4 +1,5 @@
 const query = require('./query.js');
+const axios = require('axios');
 var http = require('http');
 var express = require('express');
 var cors = require('cors')
@@ -7,15 +8,19 @@ app.use(cors());
 var server = http.createServer(app);
 var io = require('socket.io')(server, {
     cors: {
-        // origin: "http://192.168.1.123:3000",
-        //origin: "http://10.0.250.93:3000",
-        // origin: "http://localhost:3000",
-        //origin: "http://192.168.21.251:3000",
         origin: "*",
         methods: ["GET", "POST"],
     },
 });
 
+axios.get('http://localhost:3000/GetUser')
+    .then(function (response) {
+        console.log(response.data)
+    })
+axios.get('http://localhost:3000/GetFriend')
+    .then(function (response) {
+        console.log(response.data)
+    })
 //5. This function will be executed every time a user connect to the socket through the "/" express route
 io.on('connection', function (socket) {
     console.log("A new client connected!");
@@ -73,8 +78,7 @@ io.on('connection', function (socket) {
 
     // }))
 });
-
 server.listen(8000, console.log("listen"));
-// server.listen(19006, console.log("listen"));
+
 
 
