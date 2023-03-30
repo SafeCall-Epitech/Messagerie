@@ -6,6 +6,7 @@ var cors = require('cors')
 var app = express();
 app.use(cors());
 var server = http.createServer(app);
+var name = ""
 var io = require('socket.io')(server, {
     cors: {
         origin: "*",
@@ -13,21 +14,19 @@ var io = require('socket.io')(server, {
     },
 });
 
-axios.get('http://localhost:3000/GetUser')
-    .then(function (response) {
-        console.log(response.data)
-    })
-axios.get('http://localhost:3000/GetFriend')
-    .then(function (response) {
-        console.log(response.data)
-    })
-//5. This function will be executed every time a user connect to the socket through the "/" express route
 io.on('connection', function (socket) {
     console.log("A new client connected!");
+    console.log(name)
     socket.on("join_room", data => {
         console.log(data)
         socket.join(data);
     });
+    socket.on("GetUserName", data => {
+        axios.get('http://localhost:3001/GetUser')
+            .then(function (response) {
+                socket.emit("UserName", response.data)
+            })
+    })
     socket.on("join_friend", data => {
         query.connection(data)
         query.get_conv(data, function (dt, err) {
@@ -55,7 +54,6 @@ io.on('connection', function (socket) {
     socket.on("connection", data => {
         query.get_friends(data, function (dt, err) {
             if (err) {
-                // error handling code goes here
                 console.log("ERROR : ", err);
             } else {
                 var a = []
@@ -68,17 +66,15 @@ io.on('connection', function (socket) {
                 }
                 console.log(a)
                 socket.emit('get_friend', a)
-
             }
 
         });
-        console.log("hello")
     })
-    // socket.emit("get_list_user", query.get_list_user(function(result){
-
+    // socket.emit("get_list_user", query.get_list_user(function (result) {
+    //     console.log(result)
     // }))
 });
-server.listen(8000, console.log("listen"));
 
+server.listen(8000, console.log("listen"));
 
 
