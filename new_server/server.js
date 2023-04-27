@@ -11,6 +11,8 @@ const arr = []
 var room = ""
 var username
 
+// when connection, server get Username and Friendname from API and create a Room name
+
 axios.get('http://localhost:3001/GetUser')
     .then(function (response) {
         username = response.data
@@ -27,6 +29,7 @@ axios.get('http://localhost:3001/GetUser')
         console.log("ok")
     })
 
+// Serv send Room name to api and conversation if conversation already exist
 app.get('/room', function (req, res) {
     res.send(room)
     app.get('/conv', function (req, res) {
@@ -44,6 +47,7 @@ app.get('/room', function (req, res) {
     })
 })
 
+// Serv get message send by an user and save it in Database 
 axios.get('http://localhost:3001/send_message')
     .then(function (response) {
         console.log(response.data[2])
@@ -53,6 +57,7 @@ axios.get('http://localhost:3001/send_message')
         console.log("ok")
     })
 
+//Serv send all the conversations already started by the user and send it to API
 
 app.get('/get_all_conv', function (req, res) {
     query.get_friends(username, function (dt, err) {
