@@ -3,64 +3,20 @@ const express = require('express')
 const axios = require('axios');
 const app = express()
 const port = 3000
+app.use(express.json());
 
 app.get('/', (req, res) => {
     res.send('Hello World!')
 })
-const arr = []
-var room = ""
-var username
 
-// when connection, server get Username and Friendname from API and create a Room name
 
-axios.get('http://localhost:3001/GetUser')
-    .then(function (response) {
-        username = response.data
-        arr.push(response.data)
-        axios.get('http://localhost:3001/GetFriend')
-            .then(function (response) {
-                arr.push(response.data)
-                arr.sort()
-                room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
-                query.connection(room)
-
-            })
-    }).catch(function (error) {
-        console.log("ok")
-    })
-
-// Serv send Room name to api and conversation if conversation already exist
-app.get('/room', function (req, res) {
-    res.send(room)
-    app.get('/conv', function (req, res) {
-        query.get_conv(room, function (dt, err) {
-            if (err) {
-                // error handling code goes here
-                console.log("ERROR : ", err);
-            } else {
-                console.log(dt)
-                res.send(dt)
-
-            }
-
-        });
-    })
-})
-
-// Serv get message send by an user and save it in Database 
-axios.get('http://localhost:3001/send_message')
-    .then(function (response) {
-        console.log(response.data[2])
-        query.save_mess(response.data[2], response.data[0], response.data[1])
-
-    }).catch(function (error) {
-        console.log("ok")
-    })
-
-//Serv send all the conversations already started by the user and send it to API
-
-app.get('/get_all_conv', function (req, res) {
-    query.get_friends(username, function (dt, err) {
+app.get('/conv/:username/:friendname', function (req, res) {
+    arr = []
+    arr.push(req.params.username)
+    arr.push(req.params.friendname)
+    arr.sort()
+    room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
+    query.get_conv(room, function (dt, err) {
         if (err) {
             // error handling code goes here
             console.log("ERROR : ", err);
@@ -72,11 +28,45 @@ app.get('/get_all_conv', function (req, res) {
 
     });
 })
-// app.set('/receive_message/', function (req, res) {
-//     req.query.Room === room
-//     console.log(Room)
-//     res.send(Room)
-// })
+
+// Serv get message send by an user and save it in Database 
+
+app.post('/send_message', function (req, res) {
+    arr = []
+    const mess = req.body.message
+    const username = req.body.username
+    const friendname = req.body.friendname
+    arr.push(username)
+    arr.push(friendname)
+    arr.sort()
+    room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
+    query.save_mess(room, username, mess)
+    res.send(mess)
+})
+
+//Serv send all the conversations already started by the user and send it to API
+
+app.get('/get_all_conv/:username', function (req, res) {
+    console.log(req.params.username)
+    query.get_friends(req.params.username, function (dt, err) {
+        if (err) {
+            // error handling code goes here
+            console.log("ERROR : ", err);
+        } else {
+            console.log(dt)
+            res.send(dt)
+
+        }
+
+    });
+})
+
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+    next(createError(404));
+});
+
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
 })
