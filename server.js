@@ -1,80 +1,72 @@
 const query = require('./query.js');
+const express = require('express')
 const axios = require('axios');
-var http = require('http');
-var express = require('express');
-var cors = require('cors')
-var app = express();
-app.use(cors());
-var server = http.createServer(app);
-var name = ""
-var io = require('socket.io')(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"],
-    },
-});
+const app = express()
+const port = 3000
+app.use(express.json());
 
-io.on('connection', function (socket) {
-    console.log("A new client connected!");
-    console.log(name)
-    socket.on("join_room", data => {
-        console.log(data)
-        socket.join(data);
-    });
-    socket.on("GetUserName", data => {
-        axios.get('http://localhost:3001/GetUser')
-            .then(function (response) {
-                socket.emit("UserName", response.data)
-            })
-    })
-    socket.on("join_friend", data => {
-        query.connection(data)
-        query.get_conv(data, function (dt, err) {
-            if (err) {
-                // error handling code goes here
-                console.log("ERROR : ", err);
-            } else {
-                console.log(dt)
-                io.to(data).emit('r_mess_first', dt)
+app.get('/', (req, res) => {
+    res.send('Hello World!')
+})
 
-            }
 
-        });
-    })
-    socket.on('s_mess', data => {
-        if (data.room != "") {
-            io.to(data.room).emit('r_mess', data)
-            query.save_mess(data.room, data.username, data.text)
+app.get('/conv/:username/:friendname', function (req, res) {
+    arr = []
+    arr.push(req.params.username)
+    arr.push(req.params.friendname)
+    arr.sort()
+    room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
+    query.get_conv(room, function (dt, err) {
+        if (err) {
+            // error handling code goes here
+            console.log("ERROR : ", err);
+        } else {
+            console.log(dt)
+            res.send(dt)
+
         }
-        // query.get_list_user(function (data) {
-        //     console.log(data)
-        // })
-        // console.log(query.get_list_user())
-    })
-    socket.on("connection", data => {
-        query.get_friends(data, function (dt, err) {
-            if (err) {
-                console.log("ERROR : ", err);
-            } else {
-                var a = []
-                for (const d of dt) {
-                    e = d.TABLE_NAME.split("_")
-                    if (e[0] === data)
-                        a.push(e[1])
-                    else
-                        a.push(e[0])
-                }
-                console.log(a)
-                socket.emit('get_friend', a)
-            }
 
-        });
-    })
-    // socket.emit("get_list_user", query.get_list_user(function (result) {
-    //     console.log(result)
-    // }))
+    });
+})
+
+// Serv get message send by an user and save it in Database 
+
+app.post('/send_message', function (req, res) {
+    arr = []
+    const mess = req.body.message
+    const username = req.body.username
+    const friendname = req.body.friendname
+    arr.push(username)
+    arr.push(friendname)
+    arr.sort()
+    room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
+    query.save_mess(room, username, mess)
+    res.send(mess)
+})
+
+//Serv send all the conversations already started by the user and send it to API
+
+app.get('/get_all_conv/:username', function (req, res) {
+    console.log(req.params.username)
+    query.get_friends(req.params.username, function (dt, err) {
+        if (err) {
+            // error handling code goes here
+            console.log("ERROR : ", err);
+        } else {
+            console.log(dt)
+            res.send(dt)
+
+        }
+
+    });
+})
+
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+    next(createError(404));
 });
 
-server.listen(8000, console.log("listen"));
-
-
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`)
+})
