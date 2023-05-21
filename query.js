@@ -3,7 +3,7 @@ var mysql = require('mysql');
 function connection(user) {
     var con = mysql.createConnection({
         host: "localhost",
-        user: "root",
+        user: "safecall",
         password: "password",
         database: "mess"
     });
@@ -27,7 +27,7 @@ function connection(user) {
 function save_mess(table, user, mess) {
     var con = mysql.createConnection({
         host: "localhost",
-        user: "root",
+        user: "safecall",
         password: "password",
         database: "mess"
     });
@@ -55,7 +55,7 @@ function save_mess(table, user, mess) {
 function get_conv(table, cb) {
     var con = mysql.createConnection({
         host: "localhost",
-        user: "root",
+        user: "safecall",
         password: "password",
         database: "mess"
     });
@@ -83,7 +83,7 @@ function get_conv(table, cb) {
 function get_friends(user, cb) {
     var con = mysql.createConnection({
         host: "localhost",
-        user: "root",
+        user: "safecall",
         password: "password",
         database: "mess"
     });
