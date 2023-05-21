@@ -4,7 +4,7 @@ function connection(user) {
     var con = mysql.createConnection({
         host: "localhost",
         user: "root",
-        password: "password",
+        password: "",
         database: "mess"
     });
     con.connect(function (err) {
@@ -28,7 +28,7 @@ function save_mess(table, user, mess) {
     var con = mysql.createConnection({
         host: "localhost",
         user: "root",
-        password: "password",
+        password: "",
         database: "mess"
     });
 
@@ -56,7 +56,7 @@ function get_conv(table, cb) {
     var con = mysql.createConnection({
         host: "localhost",
         user: "root",
-        password: "password",
+        password: "",
         database: "mess"
     });
 
@@ -84,7 +84,7 @@ function get_friends(user, cb) {
     var con = mysql.createConnection({
         host: "localhost",
         user: "root",
-        password: "password",
+        password: "",
         database: "mess"
     });
 
