@@ -1,4 +1,3 @@
-const test = require('./queryy.js');
 const query = require('./query.js')
 const express = require('express')
 const axios = require('axios');
