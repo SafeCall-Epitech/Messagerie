@@ -1,111 +1,115 @@
-var mysql = require('mysql');
+const express = require("express")
+const app = express();
+const { MongoClient } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
-function connection(user) {
-    var con = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "",
-        database: "mess"
-    });
-    con.connect(function (err) {
-        if (err) throw err;
-        console.log("Connected!");
-        var sql = "CREATE TABLE if not exists " + user + "(id INT AUTO_INCREMENT primary key NOT NULL , username VARCHAR(255) , text VARCHAR(255) , room VARCHAR(255))";
-        con.query(sql, function (err, result) {
-            if (err) throw err;
-        });
-        con.end(function (err) {
-            if (err) {
-                return console.log('error:' + err.message);
-            }
-            console.log('Close the database connection.');
-        });
-    });
+const uri = "mongodb+srv://Test:7TLjJuHQRqSowKHE@safecall.n9jr0.mongodb.net/?retryWrites=true&w=majority";
+const database = 'userData';
+const collectionName = 'facteur';
 
+
+
+async function connection(room) {
+    try {
+        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        client.connect();
+
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
+
+        const existingDoc = await collection.findOne({ room });
+        if (existingDoc) {
+            console.log(`Document with room "${room}" already exists. No new document created.`);
+            client.close();
+            return;
+        }
+
+        const document = { room, messages: [] }; // Champ messages avec un tableau vide
+        const result = await collection.insertOne(document);
+        console.log('New document created:', result.insertedId);
+
+    } catch (error) {
+        console.error('Error creating document:', error);
+    }
 }
 
-function save_mess(table, user, mess) {
-    var con = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "",
-        database: "mess"
-    });
+async function conv(room) {
+    try {
+        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        client.connect();
 
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
+        const filter = { room: room };
+        const document = await collection.findOne(filter);
 
-    con.connect(function (err) {
-        if (err) throw err;
-        console.log("Connected!");
-        var sql = "INSERT INTO " + table + " (username, text , room) VALUES ('" + user + "', '" + mess + "','" + table + "')";
+        if (document) {
+            const messages = document.messages;
+            console.log('Messages:', messages);
+            return messages
+        } else {
+            console.log('Document not found for room:', room);
+        }
 
-        con.query(sql, function (err, result) {
-            if (err) throw err;
-            console.log("message send")
-        });
-        con.end(function (err) {
-            if (err) {
-                return console.log('error:' + err.message);
-            }
-            console.log('Close the database connection.');
-        });
-    });
-
+    } catch (error) {
+        console.error('Error retrieving and transforming messages:', error);
+    }
 }
 
-function get_conv(table, cb) {
-    var con = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "",
-        database: "mess"
-    });
+async function save_mess(room, username, mess) {
+    try {
+        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        client.connect();
 
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
+        messages = [username, mess]
 
-    con.connect(function (err) {
-        if (err) throw err;
-        var sql = "select * from " + table;
-        con.query(sql, function (err, result) {
-            if (err) return cb([]);
-            res = JSON.parse(JSON.stringify(result))
-            return cb(res)
-        });
+        const filter = { room: room };
+        const document = await collection.findOne(filter);
 
-        con.end(function (err) {
-            if (err) {
-                return console.log('error:' + err.message);
-            }
-            console.log('Close the database connection.');
-        });
-    });
+        if (document) {
+            const update = { $push: { messages: messages } };
+            const result = await collection.updateOne(filter, update);
+            console.log('Document updated:', result.modifiedCount);
+        } else {
+            console.log('Document not found for room:', room);
+        }
 
+    } catch (error) {
+        console.error('Error updating document:', error);
+    }
 }
 
-function get_friends(user, cb) {
-    var con = mysql.createConnection({
-        host: "localhost",
-        user: "root",
-        password: "",
-        database: "mess"
-    });
+async function get_friends(keyword) {
+    const fieldName = 'room';
 
+    try {
+        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        client.connect();
 
-    con.connect(function (err) {
-        if (err) throw err;
-        var sql = "SELECT table_name from information_schema.tables where table_name like '%" + user + "%'"
-        con.query(sql, function (err, result) {
-            if (err) return cb([]);
-            res = JSON.parse(JSON.stringify(result))
-            return cb(res)
-        });
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
 
-        con.end(function (err) {
-            if (err) {
-                return console.log('error:' + err.message);
-            }
-            console.log('Close the database connection.');
-        });
-    });
+        const query = { [fieldName]: { $regex: keyword, $options: 'i' } };
 
+        const documents = await collection.find(query).toArray();
 
+        if (documents.length > 0) {
+            return documents;
+        } else {
+            return []
+        }
+    } catch (err) {
+        console.error(err);
+    }
 }
-module.exports = { connection, save_mess, get_conv, get_friends }
+
+
+// app.listen(8000, () => {
+//     console.log(`Example app listening on port 8000`)
+// })
+
+module.exports = { get_friends, connection, save_mess, conv }
+
+

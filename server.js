@@ -1,6 +1,8 @@
-const query = require('./query.js');
+const test = require('./queryy.js');
+const query = require('./query.js')
 const express = require('express')
 const axios = require('axios');
+const createError = require('http-errors');
 const app = express()
 const port = 3000
 app.use(express.json());
@@ -8,28 +10,6 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.send('Hello World!')
 })
-
-
-app.get('/conv/:username/:friendname', function (req, res) {
-    arr = []
-    arr.push(req.params.username)
-    arr.push(req.params.friendname)
-    arr.sort()
-    room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
-    query.get_conv(room, function (dt, err) {
-        if (err) {
-            // error handling code goes here
-            console.log("ERROR : ", err);
-        } else {
-            console.log(dt)
-            res.send(dt)
-
-        }
-
-    });
-})
-
-// Serv get message send by an user and save it in Database 
 
 app.post('/send_message', function (req, res) {
     arr = []
@@ -39,26 +19,30 @@ app.post('/send_message', function (req, res) {
     arr.push(username)
     arr.push(friendname)
     arr.sort()
-    room = arr[0].toLowerCase() + '_' + arr[1].toLowerCase()
+    room = arr[0].toLowerCase() + arr[1].toLowerCase()
     query.save_mess(room, username, mess)
     res.send(mess)
 })
 
-//Serv send all the conversations already started by the user and send it to API
+app.get('/conv/:username/:friendname', async function (req, res) {
+    arr = []
+    arr.push(req.params.username)
+    arr.push(req.params.friendname)
+    arr.sort()
+    room = arr[0].toLowerCase() + arr[1].toLowerCase()
+    await query.connection(room)
+    const conve = await query.conv(room)
+    res.send(conve)
 
-app.get('/get_all_conv/:username', function (req, res) {
-    console.log(req.params.username)
-    query.get_friends(req.params.username, function (dt, err) {
-        if (err) {
-            // error handling code goes here
-            console.log("ERROR : ", err);
-        } else {
-            console.log(dt)
-            res.send(dt)
+});
 
-        }
-
-    });
+app.get('/get_all_conv/:username', async function (req, res) {
+    const friends = await query.get_friends(req.params.username)
+    data = []
+    for (const obj of friends) {
+        data.push(obj.room);
+    }
+    res.send(data)
 })
 
 
