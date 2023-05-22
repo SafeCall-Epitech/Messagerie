@@ -1,18 +1,21 @@
-const express = require("express")
-const app = express();
 const { MongoClient } = require('mongodb');
-const { ObjectId } = require('mongodb');
 
 const uri = "mongodb+srv://Test:7TLjJuHQRqSowKHE@safecall.n9jr0.mongodb.net/?retryWrites=true&w=majority";
 const database = 'userData';
 const collectionName = 'facteur';
 
+let client;
 
+async function connect() {
+    if (!client) {
+        client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+        await client.connect();
+    }
+}
 
 async function connection(room) {
     try {
-        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        client.connect();
+        await connect();
 
         const db = client.db(database);
         const collection = db.collection(collectionName);
@@ -20,14 +23,12 @@ async function connection(room) {
         const existingDoc = await collection.findOne({ room });
         if (existingDoc) {
             console.log(`Document with room "${room}" already exists. No new document created.`);
-            client.close();
             return;
         }
 
-        const document = { room, messages: [] }; // Champ messages avec un tableau vide
+        const document = { room, messages: [] };
         const result = await collection.insertOne(document);
         console.log('New document created:', result.insertedId);
-
     } catch (error) {
         console.error('Error creating document:', error);
     }
@@ -35,22 +36,20 @@ async function connection(room) {
 
 async function conv(room) {
     try {
-        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        client.connect();
+        await connect();
 
         const db = client.db(database);
         const collection = db.collection(collectionName);
-        const filter = { room: room };
+        const filter = { room };
         const document = await collection.findOne(filter);
 
         if (document) {
             const messages = document.messages;
             console.log('Messages:', messages);
-            return messages
+            return messages;
         } else {
             console.log('Document not found for room:', room);
         }
-
     } catch (error) {
         console.error('Error retrieving and transforming messages:', error);
     }
@@ -58,14 +57,13 @@ async function conv(room) {
 
 async function save_mess(room, username, mess) {
     try {
-        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        client.connect();
+        await connect();
 
         const db = client.db(database);
         const collection = db.collection(collectionName);
-        messages = [username, mess]
+        const messages = [username, mess];
 
-        const filter = { room: room };
+        const filter = { room };
         const document = await collection.findOne(filter);
 
         if (document) {
@@ -75,7 +73,6 @@ async function save_mess(room, username, mess) {
         } else {
             console.log('Document not found for room:', room);
         }
-
     } catch (error) {
         console.error('Error updating document:', error);
     }
@@ -85,8 +82,7 @@ async function get_friends(keyword) {
     const fieldName = 'room';
 
     try {
-        const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-        client.connect();
+        await connect();
 
         const db = client.db(database);
         const collection = db.collection(collectionName);
@@ -98,18 +94,11 @@ async function get_friends(keyword) {
         if (documents.length > 0) {
             return documents;
         } else {
-            return []
+            return [];
         }
     } catch (err) {
         console.error(err);
     }
 }
 
-
-// app.listen(8000, () => {
-//     console.log(`Example app listening on port 8000`)
-// })
-
-module.exports = { get_friends, connection, save_mess, conv }
-
-
+module.exports = { get_friends, connection, save_mess, conv };
