@@ -13,26 +13,26 @@ async function connect() {
     }
 }
 
-async function connection(room) {
-    try {
-        await connect();
+// async function connection(room) {
+//     try {
+//         await connect();
 
-        const db = client.db(database);
-        const collection = db.collection(collectionName);
+//         const db = client.db(database);
+//         const collection = db.collection(collectionName);
 
-        const existingDoc = await collection.findOne({ room });
-        if (existingDoc) {
-            console.log(`Document with room "${room}" already exists. No new document created.`);
-            return;
-        }
+//         const existingDoc = await collection.findOne({ room });
+//         if (existingDoc) {
+//             console.log(`Document with room "${room}" already exists. No new document created.`);
+//             return;
+//         }
 
-        const document = { room, messages: [] };
-        const result = await collection.insertOne(document);
-        console.log('New document created:', result.insertedId);
-    } catch (error) {
-        console.error('Error creating document:', error);
-    }
-}
+//         const document = { room, messages: [] };
+//         const result = await collection.insertOne(document);
+//         console.log('New document created:', result.insertedId);
+//     } catch (error) {
+//         console.error('Error creating document:', error);
+//     }
+// }
 
 async function conv(room) {
     try {
@@ -55,28 +55,28 @@ async function conv(room) {
     }
 }
 
-async function save_mess(room, username, mess) {
-    try {
-        await connect();
+// async function save_mess(room, username, mess) {
+//     try {
+//         await connect();
 
-        const db = client.db(database);
-        const collection = db.collection(collectionName);
-        const messages = [username, mess];
+//         const db = client.db(database);
+//         const collection = db.collection(collectionName);
+//         const messages = [username, mess];
 
-        const filter = { room };
-        const document = await collection.findOne(filter);
+//         const filter = { room };
+//         const document = await collection.findOne(filter);
 
-        if (document) {
-            const update = { $push: { messages: messages } };
-            const result = await collection.updateOne(filter, update);
-            console.log('Document updated:', result.modifiedCount);
-        } else {
-            console.log('Document not found for room:', room);
-        }
-    } catch (error) {
-        console.error('Error updating document:', error);
-    }
-}
+//         if (document) {
+//             const update = { $push: { messages: messages } };
+//             const result = await collection.updateOne(filter, update);
+//             console.log('Document updated:', result.modifiedCount);
+//         } else {
+//             console.log('Document not found for room:', room);
+//         }
+//     } catch (error) {
+//         console.error('Error updating document:', error);
+//     }
+// }
 
 async function get_friends(keyword) {
     const fieldName = 'room';
@@ -101,4 +101,51 @@ async function get_friends(keyword) {
     }
 }
 
+
+
+async function connection(room) {
+    try {
+        await connect();
+
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
+
+        const existingDoc = await collection.findOne({ room });
+        if (existingDoc) {
+            console.log(`Document with room "${room}" already exists. No new document created.`);
+            return;
+        }
+
+        const document = { room, messages: [], last_mess: "" };
+        const result = await collection.insertOne(document);
+        console.log('New document created:', result.insertedId);
+    } catch (error) {
+        console.error('Error creating document:', error);
+    }
+}
+
+
+async function save_mess(room, username, mess) {
+    try {
+        await connect();
+
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
+        const messages = [username, mess];
+        const lastMessage = `${username}: ${mess}`
+
+        const filter = { room };
+        const document = await collection.findOne(filter);
+
+        if (document) {
+            const update = { $push: { messages: messages }, $set: { last_mess: lastMessage } };
+            const result = await collection.updateOne(filter, update);
+            console.log('Document updated:', result.modifiedCount);
+        } else {
+            console.log('Document not found for room:', room);
+        }
+    } catch (error) {
+        console.error('Error updating document:', error);
+    }
+}
 module.exports = { get_friends, connection, save_mess, conv };
