@@ -157,5 +157,25 @@ async function findLastMessageByRoom(room) {
     }
 }
 
+async function deleteRoom(room) {
+    try {
+        await connect();
 
-module.exports = { get_friends, connection, save_mess, conv, findLastMessageByRoom };
+        const db = client.db(database);
+        const collection = db.collection(collectionName);
+
+        const filter = { room };
+        const result = await collection.deleteOne(filter);
+
+        if (result.deletedCount === 1) {
+            console.log(`Room "${room}" has been deleted.`);
+        } else {
+            console.log(`No room found for "${room}" to delete.`);
+        }
+    } catch (error) {
+        console.error('Error deleting room:', error);
+    }
+}
+
+
+module.exports = { get_friends, connection, save_mess, conv, findLastMessageByRoom, deleteRoom };

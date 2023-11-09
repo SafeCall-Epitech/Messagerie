@@ -27,6 +27,7 @@ app.get('/conv/:username/:friendname', async function (req, res) {
     arr = []
     arr.push(req.params.username)
     arr.push(req.params.friendname)
+
     arr.sort()
     room = arr[0].toLowerCase() + arr[1].toLowerCase()
     await query.connection(room)
@@ -35,24 +36,33 @@ app.get('/conv/:username/:friendname', async function (req, res) {
 
 });
 
-// app.get('/get_all_conv/:username', async function (req, res) {
-//     const friends = await query.get_friends(req.params.username)
-//     data = []
-//     for (const obj of friends) {
-//         data.push(obj.room);
-//     }
-//     res.send(data)
-// })
-
 app.get('/get_all_conv/:username', async function (req, res) {
     const friends = await query.get_friends(req.params.username)
     console.log(friends)
     data = []
     for (const obj of friends) {
-        data.push(obj.room + ':' + obj.last_mess);
+        data.push([obj.room, obj.last_mess]);
     }
     res.send(data)
 })
+
+app.get('/get_last_mess/:username/:friendname', async function (req, res) {
+    arr = []
+    arr.push(req.params.username)
+    arr.push(req.params.friendname)
+
+    arr.sort()
+    room = arr[0].toLowerCase() + arr[1].toLowerCase()
+    const mess = await query.findLastMessageByRoom(room)
+    res.send(mess)
+})
+
+app.get('/del_room/:room', async function (req, res) {
+    room = req.params.room
+    const mess = await query.deleteRoom(room)
+    res.send(mess)
+})
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
     next(createError(404));
