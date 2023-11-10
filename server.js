@@ -41,7 +41,7 @@ app.get('/get_all_conv/:username', async function (req, res) {
     console.log(friends)
     data = []
     for (const obj of friends) {
-        data.push([obj.room, obj.last_mess]);
+        data.push(obj.room + ':' + obj.last_mess);
     }
     res.send(data)
 })
