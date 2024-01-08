@@ -59,12 +59,15 @@ async function save_mess(room, username, mess) {
     const d = new Date();
     let hour = d.getHours();
     let min = d.getMinutes();
+    let month = d.getMonth() + 1;
+    let day = d.getDate();
+    let year = d.getFullYear();
     try {
         await connect();
 
         const db = client.db(database);
         const collection = db.collection(collectionName);
-        const messages = [username, mess, hour + ":" + min];
+        const messages = [username, mess, hour + ":" + min + " " + day + "/" + month + "/" + year];
         const lastMessage = `${username}: ${mess} ${hour + ":" + min}`;
 
         const filter = { room };
