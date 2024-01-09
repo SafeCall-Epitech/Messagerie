@@ -36,6 +36,8 @@ app.post('/send_message', function (req, res) {
 
     // Émettez un événement Socket.IO pour informer les clients du nouveau message
     io.to(room).emit('chat message', { sender: username, message: mess });
+
+    console.log(room)
     console.log("yo")
 
     res.send(mess);
@@ -78,12 +80,28 @@ app.get('/get_last_mess/:username/:friendname', async function (req, res) {
 app.get('/del_room/:room', async function (req, res) {
     room = req.params.room
     const mess = await query.deleteRoom(room)
+
     res.send(mess)
 })
 
 // Gestion des connexions Socket.IO
 io.on('connection', (socket) => {
-    console.log('Un client s\'est connecté');
+    console.log(`Un client s\'est connecté ${socket.id}`);
+
+    socket.on('join room', (arrr) => {
+        const arr = arrr
+        arr.sort();
+        const room = arr[0].toLowerCase() + arr[1].toLowerCase();
+        console.log(`Socket ${socket.id} a rejoint la room ${room}`);
+        socket.rooms.forEach((room) => {
+            if (room !== socket.id) {
+                socket.leave(room);
+                console.log(`Socket ${socket.id} a quitté la room ${room}`);
+            }
+        });
+        socket.join(room);
+        console.log(`Socket ${socket.id} est connectée aux rooms : ${Array.from(socket.rooms).join(', ')}`);
+    });
 
     socket.on('disconnect', () => {
         console.log('Un client s\'est déconnecté');
